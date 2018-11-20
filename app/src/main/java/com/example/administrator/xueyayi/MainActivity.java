@@ -5,18 +5,37 @@ import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import cn.bmob.v3.Bmob;
+import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobUser;
+import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.FindListener;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
+
+    private List<Reservation_Record> recordList = new ArrayList<>();
+    RecordAdapter adapter;
+    LinearLayoutManager linearLayoutManager;
+    RecyclerView recyclerView;
+    TextView record_count;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +45,16 @@ public class MainActivity extends AppCompatActivity
         //初始化Bmob
         Bmob.initialize(this, "4d2a726d5d0cea00f31b49cefb0c7a89");
 
+        initRecord();
+
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                initRecord();
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -56,6 +85,34 @@ public class MainActivity extends AppCompatActivity
         drawview.findViewById(R.id.textView).setOnClickListener(this);
 
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void initRecord(){
+        record_count = findViewById(R.id.record_count);
+        BmobQuery<Reservation_Record> query = new BmobQuery<>();
+        query.order("-Time_Date");
+        bmobUser = BmobUser.getCurrentUser();
+        query.addWhereEqualTo("UserId",bmobUser.getUsername());
+        query.findObjects(new FindListener<Reservation_Record>() {
+            @Override
+            public void done(List<Reservation_Record> list, BmobException e) {
+                if(e == null){
+                    recordList.clear();
+                    recordList.addAll(list);
+                    Collections.sort(recordList);//默认排序(从小到大)
+                    recyclerView = findViewById(R.id.recycler_view);
+                    linearLayoutManager = new LinearLayoutManager(MainActivity.this);
+                    recyclerView.setLayoutManager(linearLayoutManager);
+                    adapter = new RecordAdapter(recordList);
+                    recyclerView.setAdapter(adapter);
+                    adapter.notifyDataSetChanged();
+                    
+                    record_count.setText(String.valueOf(adapter.getItemCount()));
+                }else {
+                    Log.i("bmob","失败："+e.getMessage()+","+e.getErrorCode());
+                }
+            }
+        });
     }
 
     Intent intent = null;
