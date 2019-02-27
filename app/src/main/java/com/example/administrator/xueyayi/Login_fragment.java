@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.LogInListener;
 import cn.bmob.v3.listener.SaveListener;
 
 public class Login_fragment extends Fragment implements View.OnClickListener {
@@ -56,20 +55,21 @@ public class Login_fragment extends Fragment implements View.OnClickListener {
                     String UserAccount = useraccount.getText().toString();
                     String UserPassword = userpassword.getText().toString();
                     //将用户账号密码存入User对象中
-                    BmobUser user = new BmobUser();;
+                    BmobUser user = new BmobUser();
+                    ;
                     user.setUsername(UserAccount);
                     user.setPassword(UserPassword);
                     user.login(new SaveListener<BmobUser>() {
 
                         @Override
                         public void done(BmobUser bmobUser, BmobException e) {
-                            if(e==null){
-                                Log.i("smile","用户登录成功");
+                            if (e == null) {
+                                Log.i("smile", "用户登录成功");
                                 getActivity().finish();
                                 //通过BmobUser user = BmobUser.getCurrentUser()获取登录成功后的本地用户信息
                                 //如果是自定义用户对象MyUser，可通过MyUser user = BmobUser.getCurrentUser(MyUser.class)获取自定义用户信息
-                            }else{
-                                Log.i("smile","用户登录失败");
+                            } else {
+                                Log.i("smile", "用户登录失败");
                             }
                         }
                     });
